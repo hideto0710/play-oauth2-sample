@@ -2,14 +2,19 @@ package com.hideto0710.oauth2sample.api.controllers
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+
+import play.api.mvc.{Controller, Action}
+import play.api.db.slick.DatabaseConfigProvider
+
 import scalaoauth2.provider._
 import scalaoauth2.provider.{DataHandler, ClientCredential, AccessToken, AuthInfo}
 
-import play.api.mvc.{Controller, Action}
+import javax.inject.Inject
 
 import com.hideto0710.oauth2sample.api.models._
 
-class OAuth2Controller extends Controller with OAuth2Provider {
+class OAuth2Controller @Inject()(dbConfigProvider: DatabaseConfigProvider) extends Controller with OAuth2Provider {
+
   def accessToken = Action.async { implicit request =>
     issueAccessToken(new MyDataHandler())
   }

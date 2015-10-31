@@ -1,6 +1,6 @@
 package com.hideto0710.oauth2sample.api.controllers
 
-import play.api.mvc._
+import play.api.mvc.{Action, Controller}
 
 class Application extends Controller {
 

@@ -13,9 +13,13 @@
     This configures the log level to log at for a package and its children packages.
   -->
   <logger name="play" level="INFO" />
+  <logger name="com.google.inject" level="INFO" />
+  <logger name="com.zaxxer.hikari" level="INFO" />
+  <logger name="slick.compiler" level="INFO" />
+  <logger name="net.sf.ehcache" level="INFO" />
   <logger name="application" level="DEBUG" />
 
-  <root level="ERROR">
+  <root level="DEBUG">
     <appender-ref ref="STDOUT" />
   </root>
 
