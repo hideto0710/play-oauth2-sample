@@ -19,12 +19,27 @@ class UserDAO @Inject()(protected val dbConfigProvider: DatabaseConfigProvider) 
 
   private val Users = TableQuery[UsersTable]
 
-  def insert(user: User): Future[Unit] = db.run(Users += user).map { _ => () }
+  def insert(user: User): Future[Long] = {
+    val queryWithId = (Users returning Users.map(_.id)) += user
+    db.run(queryWithId).map(r => r)
+  }
 
-  def all(): Future[Seq[User]] = db.run(Users.result)
+  def all(): Future[Option[Seq[User]]] = {
+    db.run(Users.result).map(us =>
+      if (us.nonEmpty) Some(us) else None
+    )
+  }
 
-  def select(id: Long): Future[Seq[User]] = {
-    db.run((for { u <- Users if u.id === id } yield u).result)
+  def select(id: Long): Future[Option[User]] = {
+    db.run(Users.filter(_.id === id).result).map(r =>
+      r.headOption
+    )
+  }
+
+  def delete(id: Long): Future[Option[Int]] = {
+    db.run(Users.filter(_.id === id).delete).map(i =>
+      if (i == 0) None else Some(i)
+    )
   }
 
   private class UsersTable(tag: Tag) extends Table[User](tag, "User") {

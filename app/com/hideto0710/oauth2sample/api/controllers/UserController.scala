@@ -17,9 +17,10 @@ class UserController @Inject()(userDAO: UserDAO) extends Controller {
   //private val logger = LoggerFactory.getLogger("com.hideto0710.oauth2sample.api.controllers.UserController")
 
   def insertUser() = Action.async(parse.json) { implicit request =>
-    request.body.validate[UserRequest].map {
-      case ur: UserRequest =>
-        userDAO.insert(User(None, ur.name)).map(_ => Ok)
+    request.body.validate[UserRequest].map { ur =>
+      userDAO.insert(User(None, ur.name)).map(r =>
+        Ok(Json.toJson(UserResponse(r, ur.name)))
+      )
     }.recoverTotal {
       e => Future(BadRequest)
     }
@@ -27,20 +28,22 @@ class UserController @Inject()(userDAO: UserDAO) extends Controller {
 
   def getUsers = Action.async { implicit request =>
     userDAO.all().map {
-      case u if u.nonEmpty =>
-        Ok(Json.toJson(UsersResponse(u.length, u)))
-      case _ =>
-        Ok(Json.toJson(UsersResponse(0, Seq.empty)))
+      case Some(us) => Ok(Json.toJson(UsersResponse(us.length, us)))
+      case None =>  Ok(Json.toJson(UsersResponse(0, Seq.empty)))
     }
   }
 
   def getUser(id: Long) = Action.async { implicit request =>
     userDAO.select(id).map {
-      case us if us.nonEmpty =>
-        val u = us.head
-        Ok(Json.toJson(UserResponse(u.id.get, u.name)))
-      case _ =>
-        NotFound
+      case Some(u) => Ok(Json.toJson(UserResponse(u.id.get, u.name)))
+      case None => NotFound
+    }
+  }
+
+  def deleteUser(id: Long) = Action.async { implicit request =>
+    userDAO.delete(id).map {
+      case Some(x) => Ok
+      case None => NotFound
     }
   }
 }
