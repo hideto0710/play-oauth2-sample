@@ -5,7 +5,7 @@
 # Home page
 GET     /                           com.hideto0710.oauth2sample.api.controllers.Application.index
 
-POST    /auth/access_token          com.hideto0710.oauth2sample.api.controllers.OAuth2Controller.accessToken
+POST    /oauth/access_token         com.hideto0710.oauth2sample.api.controllers.OAuth2Controller.accessToken
 
 POST    /users                      com.hideto0710.oauth2sample.api.controllers.UserController.insertUser
 GET     /users                      com.hideto0710.oauth2sample.api.controllers.UserController.getUsers
