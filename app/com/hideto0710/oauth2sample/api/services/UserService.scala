@@ -1,30 +1,34 @@
 package com.hideto0710.oauth2sample.api.services
 
-import com.hideto0710.oauth2sample.api.models.User
+import play.api.libs.functional.syntax.functionalCanBuildApplicative
+import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json._
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
 
-case class UserResponse(id: Long, name: String)
+import com.hideto0710.oauth2sample.api.models.User
+
+
+case class UserResponse(id: Long, name: String, email: String)
 
 object UserResponse {
   implicit val userResponse = new Writes[UserResponse] {
     override def writes(ur: UserResponse) = Json.obj(
       "id" -> ur.id,
-      "name" -> ur.name
+      "name" -> ur.name,
+      "email" -> ur.email
     )
   }
 }
 
 
-case class UserRequest(name: String)
+case class UserRequest(name: String, email: String, password: String)
 
 object UserRequest {
 
-  implicit val filterWordsUpdateRequest = new Reads[UserRequest] {
-    override def reads(js: JsValue) =
-      (js \ "name").validate[String].flatMap(
-        words => new JsSuccess(UserRequest(words)))
-  }
+  implicit val userRequest: Reads[UserRequest] = (
+    (__ \ "name").read[String] and
+    (__ \ "email").read[String] and
+    (__ \ "password").read[String])(UserRequest.apply _)
 
 }
 
@@ -35,7 +39,8 @@ object UsersResponse {
   implicit val userWrites = new Writes[User] {
     override def writes(u: User) = Json.obj(
       "id" -> u.id,
-      "name" -> u.name
+      "name" -> u.name,
+      "email" -> u.email
     )
   }
 

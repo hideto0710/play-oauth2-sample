@@ -18,8 +18,8 @@ class UserController @Inject()(userDAO: UserDAO) extends Controller {
 
   def insertUser() = Action.async(parse.json) { implicit request =>
     request.body.validate[UserRequest].map { ur =>
-      userDAO.insert(User(None, ur.name)).map(r =>
-        Ok(Json.toJson(UserResponse(r, ur.name)))
+      userDAO.insert(User(None, ur.name, ur.email, ur.password)).map(r =>
+        Ok(Json.toJson(UserResponse(r, ur.name, ur.email)))
       )
     }.recoverTotal {
       e => Future(BadRequest)
@@ -35,7 +35,7 @@ class UserController @Inject()(userDAO: UserDAO) extends Controller {
 
   def getUser(id: Long) = Action.async { implicit request =>
     userDAO.select(id).map {
-      case Some(u) => Ok(Json.toJson(UserResponse(u.id.get, u.name)))
+      case Some(u) => Ok(Json.toJson(UserResponse(u.id.get, u.name, u.email)))
       case None => NotFound
     }
   }

@@ -1,5 +1,7 @@
 package com.hideto0710.oauth2sample.api.models
 
+import java.security.MessageDigest
+
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -8,7 +10,7 @@ import slick.driver.JdbcProfile
 
 import javax.inject.Inject
 
-case class User(id: Option[Long], name: String)
+case class User(id: Option[Long], name: String, email: String, password: String)
 
 class UserDAO @Inject()(protected val dbConfigProvider: DatabaseConfigProvider) extends HasDatabaseConfigProvider[JdbcProfile] {
 
@@ -19,8 +21,16 @@ class UserDAO @Inject()(protected val dbConfigProvider: DatabaseConfigProvider) 
 
   private val Users = TableQuery[UsersTable]
 
+  private def digestString(s: String): String = {
+    val md = MessageDigest.getInstance("SHA-1")
+    md.update(s.getBytes)
+    md.digest.foldLeft("") { (s, b) =>
+      s + "%02x".format(if (b < 0) b + 256 else b)
+    }
+  }
+
   def insert(user: User): Future[Long] = {
-    val queryWithId = (Users returning Users.map(_.id)) += user
+    val queryWithId = (Users returning Users.map(_.id)) += user.copy(password = digestString(user.password))
     db.run(queryWithId).map(r => r)
   }
 
@@ -42,11 +52,19 @@ class UserDAO @Inject()(protected val dbConfigProvider: DatabaseConfigProvider) 
     )
   }
 
+  def authenticate(email: String, password: String): Future[Option[User]] = {
+    db.run(Users.filter(_.email === email).filter(_.password === password).result).map(r =>
+      r.headOption
+    )
+  }
+
   private class UsersTable(tag: Tag) extends Table[User](tag, "User") {
 
     def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
     def name = column[String]("name")
+    def email = column[String]("email")
+    def password = column[String]("password")
 
-    def * = (id.?, name) <> (User.tupled, User.unapply)
+    def * = (id.?, name, email, password) <> (User.tupled, User.unapply)
   }
 }
