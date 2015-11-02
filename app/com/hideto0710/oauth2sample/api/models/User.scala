@@ -8,9 +8,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import play.api.db.slick.{HasDatabaseConfigProvider, DatabaseConfigProvider}
 import slick.driver.JdbcProfile
 
+import org.joda.time.DateTime
 import javax.inject.Inject
 
-case class User(id: Option[Long], name: String, email: String, password: String)
+case class User(id: Option[Long], name: String, email: String, password: String, createdAt: DateTime)
 
 class UserDAO @Inject()(protected val dbConfigProvider: DatabaseConfigProvider) extends HasDatabaseConfigProvider[JdbcProfile] {
 
@@ -18,6 +19,7 @@ class UserDAO @Inject()(protected val dbConfigProvider: DatabaseConfigProvider) 
   //private val logger = LoggerFactory.getLogger("com.hideto0710.oauth2sample.api.models.UserDAO")
 
   import driver.api._
+  import com.github.tototoshi.slick.H2JodaSupport._
 
   private val Users = TableQuery[UsersTable]
 
@@ -64,7 +66,8 @@ class UserDAO @Inject()(protected val dbConfigProvider: DatabaseConfigProvider) 
     def name = column[String]("name")
     def email = column[String]("email")
     def password = column[String]("password")
+    def createdAt = column[DateTime]("created_at")
 
-    def * = (id.?, name, email, password) <> (User.tupled, User.unapply)
+    def * = (id.?, name, email, password, createdAt) <> (User.tupled, User.unapply)
   }
 }

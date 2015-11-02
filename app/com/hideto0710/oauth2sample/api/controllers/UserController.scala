@@ -6,6 +6,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import play.api.libs.json._
 import play.api.mvc.{Action, Controller}
 
+import org.joda.time.DateTime
 import javax.inject.Inject
 
 import com.hideto0710.oauth2sample.api.models.{User, UserDAO}
@@ -18,8 +19,9 @@ class UserController @Inject()(userDAO: UserDAO) extends Controller {
 
   def insertUser() = Action.async(parse.json) { implicit request =>
     request.body.validate[UserRequest].map { ur =>
-      userDAO.insert(User(None, ur.name, ur.email, ur.password)).map(r =>
-        Ok(Json.toJson(UserResponse(r, ur.name, ur.email)))
+      val now = DateTime.now()
+      userDAO.insert(User(None, ur.name, ur.email, ur.password, now)).map(r =>
+        Ok(Json.toJson(UserResponse(r, ur.name, ur.email, UserResponse.dateTimeToString(now))))
       )
     }.recoverTotal {
       e => Future(BadRequest)
@@ -35,7 +37,9 @@ class UserController @Inject()(userDAO: UserDAO) extends Controller {
 
   def getUser(id: Long) = Action.async { implicit request =>
     userDAO.select(id).map {
-      case Some(u) => Ok(Json.toJson(UserResponse(u.id.get, u.name, u.email)))
+      case Some(u) => Ok(Json.toJson(
+        UserResponse(u.id.get, u.name, u.email, UserResponse.dateTimeToString(u.createdAt))
+      ))
       case None => NotFound
     }
   }

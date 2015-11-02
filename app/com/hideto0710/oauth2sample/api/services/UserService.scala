@@ -5,17 +5,25 @@ import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json._
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
 
+import org.joda.time.DateTime
+import org.joda.time.format.ISODateTimeFormat
+
 import com.hideto0710.oauth2sample.api.models.User
 
 
-case class UserResponse(id: Long, name: String, email: String)
+case class UserResponse(id: Long, name: String, email: String, createdAt: String)
 
 object UserResponse {
+  def dateTimeToString(dt: DateTime) = {
+    dt.toString(ISODateTimeFormat.dateTimeNoMillis())
+  }
+
   implicit val userResponse = new Writes[UserResponse] {
     override def writes(ur: UserResponse) = Json.obj(
       "id" -> ur.id,
       "name" -> ur.name,
-      "email" -> ur.email
+      "email" -> ur.email,
+      "created_at" -> ur.createdAt
     )
   }
 }
@@ -40,7 +48,8 @@ object UsersResponse {
     override def writes(u: User) = Json.obj(
       "id" -> u.id,
       "name" -> u.name,
-      "email" -> u.email
+      "email" -> u.email,
+      "created_at" -> UserResponse.dateTimeToString(u.createdAt)
     )
   }
 
