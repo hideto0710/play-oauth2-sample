@@ -2,12 +2,13 @@ package com.hideto0710.oauth2sample.api.models
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.Random
 import play.api.db.slick.{HasDatabaseConfigProvider, DatabaseConfigProvider}
 import slick.driver.JdbcProfile
+import java.security.SecureRandom
 import org.joda.time.DateTime
 import javax.inject.Inject
-
-import scalaoauth2.provider.AccessToken
+import scalaoauth2.provider.{AuthInfo, AccessToken}
 
 case class OAuthAccessToken(
   id: Option[Long],
@@ -52,6 +53,29 @@ class OAuthAccessTokenDAO @Inject()(
     Some(accessTokenExpireSeconds),
     accessToken.createdAt.toDate
   )
+
+  def insert(oat: OAuthAccessToken): Future[Long] = {
+    db.run((oAuthAccessTokens returning oAuthAccessTokens.map(_.id)) += oat).map(r => r)
+  }
+
+  def insertWithReturnToken(oat: OAuthAccessToken): Future[AccessToken] = {
+    insert(oat).map(r => toAccessToken(oat.copy(id = Some(r))))
+  }
+
+  def create(authInfo: AuthInfo[Account], oAuthClient: OAuthClient) = {
+    def randomString(length: Int) = new Random(new SecureRandom()).alphanumeric.take(length).mkString
+    val accessToken = randomString(40)
+    val refreshToken = randomString(40)
+    val createdAt = DateTime.now()
+    OAuthAccessToken(
+      None,
+      authInfo.user.id.get,
+      oAuthClient.id.get,
+      accessToken,
+      refreshToken,
+      createdAt
+    )
+  }
 
   def findByAccessToken(accessToken: String): Future[Option[OAuthAccessToken]] = {
     db.run(oAuthAccessTokens

@@ -5,8 +5,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import play.api.db.slick.{HasDatabaseConfigProvider, DatabaseConfigProvider}
 import slick.driver.JdbcProfile
 import java.security.MessageDigest
-import org.joda.time.DateTime
 import javax.inject.Inject
+import org.joda.time.DateTime
 
 case class Account(id: Option[Long], name: String, email: String, password: String, createdAt: DateTime)
 
