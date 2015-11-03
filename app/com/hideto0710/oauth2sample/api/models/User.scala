@@ -1,27 +1,34 @@
 package com.hideto0710.oauth2sample.api.models
 
-import java.security.MessageDigest
-
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import play.api.db.slick.{HasDatabaseConfigProvider, DatabaseConfigProvider}
 import slick.driver.JdbcProfile
-
+import java.security.MessageDigest
 import org.joda.time.DateTime
 import javax.inject.Inject
 
 case class User(id: Option[Long], name: String, email: String, password: String, createdAt: DateTime)
 
-class UserDAO @Inject()(protected val dbConfigProvider: DatabaseConfigProvider) extends HasDatabaseConfigProvider[JdbcProfile] {
-
-  //import org.slf4j.LoggerFactory
-  //private val logger = LoggerFactory.getLogger("com.hideto0710.oauth2sample.api.models.UserDAO")
+class UserDAO @Inject()(
+  protected val dbConfigProvider: DatabaseConfigProvider
+) extends HasDatabaseConfigProvider[JdbcProfile] {
 
   import driver.api._
   import com.github.tototoshi.slick.H2JodaSupport._
 
-  private val Users = TableQuery[UsersTable]
+  class UserTable(tag: Tag) extends Table[User](tag, "user") {
+
+    def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+    def name = column[String]("name")
+    def email = column[String]("email")
+    def password = column[String]("password")
+    def createdAt = column[DateTime]("created_at")
+
+    def * = (id.?, name, email, password, createdAt) <> (User.tupled, User.unapply)
+  }
+
+  private val Users = TableQuery[UserTable]
 
   private def digestString(s: String): String = {
     val md = MessageDigest.getInstance("SHA-1")
@@ -58,16 +65,5 @@ class UserDAO @Inject()(protected val dbConfigProvider: DatabaseConfigProvider) 
     db.run(Users.filter(_.email === email).filter(_.password === password).result).map(r =>
       r.headOption
     )
-  }
-
-  private class UsersTable(tag: Tag) extends Table[User](tag, "User") {
-
-    def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-    def name = column[String]("name")
-    def email = column[String]("email")
-    def password = column[String]("password")
-    def createdAt = column[DateTime]("created_at")
-
-    def * = (id.?, name, email, password, createdAt) <> (User.tupled, User.unapply)
   }
 }

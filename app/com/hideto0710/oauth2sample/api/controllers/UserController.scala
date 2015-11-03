@@ -2,10 +2,8 @@ package com.hideto0710.oauth2sample.api.controllers
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import play.api.libs.json._
 import play.api.mvc.{Action, Controller}
-
 import org.joda.time.DateTime
 import javax.inject.Inject
 
@@ -13,9 +11,6 @@ import com.hideto0710.oauth2sample.api.models.{User, UserDAO}
 import com.hideto0710.oauth2sample.api.services.{UserRequest, UsersResponse, UserResponse}
 
 class UserController @Inject()(userDAO: UserDAO) extends Controller {
-
-  //import org.slf4j.LoggerFactory
-  //private val logger = LoggerFactory.getLogger("com.hideto0710.oauth2sample.api.controllers.UserController")
 
   def insertUser() = Action.async(parse.json) { implicit request =>
     request.body.validate[UserRequest].map { ur =>

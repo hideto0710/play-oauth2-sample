@@ -4,12 +4,10 @@ import play.api.libs.functional.syntax.functionalCanBuildApplicative
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json._
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
-
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 
 import com.hideto0710.oauth2sample.api.models.User
-
 
 case class UserResponse(id: Long, name: String, email: String, createdAt: String)
 
@@ -28,7 +26,6 @@ object UserResponse {
   }
 }
 
-
 case class UserRequest(name: String, email: String, password: String)
 
 object UserRequest {
@@ -39,7 +36,6 @@ object UserRequest {
     (__ \ "password").read[String])(UserRequest.apply _)
 
 }
-
 
 case class UsersResponse(total: Int, users: Seq[User])
 
