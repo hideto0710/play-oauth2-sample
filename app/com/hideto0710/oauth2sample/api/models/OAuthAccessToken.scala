@@ -97,7 +97,7 @@ class OAuthAccessTokenDAO @Inject()(
         oat <- oAuthAccessTokens
           .filter(_.accessToken === accessToken)
         as <- accounts
-          .filter(_.id === oat.id)
+          .filter(_.id === oat.accountId)
         oc <- oAuthClients
           .filter(_.id === oat.oauthClientId)
       } yield (oat, as, oc)).result)
