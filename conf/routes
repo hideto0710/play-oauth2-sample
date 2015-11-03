@@ -8,6 +8,8 @@ GET     /                           com.hideto0710.oauth2sample.api.controllers.
 POST    /oauth/access_token         com.hideto0710.oauth2sample.api.controllers.OAuthController.accessToken
 POST    /oauth/client               com.hideto0710.oauth2sample.api.controllers.OAuthClientController.insertOAuthClient
 GET     /oauth/client/$id<[0-9]+>   com.hideto0710.oauth2sample.api.controllers.OAuthClientController.getOAuthClient(id: Long)
+POST    /oauth/code                 com.hideto0710.oauth2sample.api.controllers.OAuthAuthorizationCodeController.insertOAuthAuthorizationCode
+GET     /oauth/code/$id<[0-9]+>     com.hideto0710.oauth2sample.api.controllers.OAuthAuthorizationCodeController.getOAuthAuthorizationCode(id: Long)
 
 POST    /accounts                   com.hideto0710.oauth2sample.api.controllers.AccountController.insertAccount
 GET     /accounts                   com.hideto0710.oauth2sample.api.controllers.AccountController.getAccounts

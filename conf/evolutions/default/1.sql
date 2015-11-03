@@ -1,5 +1,4 @@
 # --- !Ups
-
 create table "account" (
   "id" BIGINT AUTO_INCREMENT PRIMARY KEY,
   "name" VARCHAR(100) NOT NULL,
@@ -29,8 +28,20 @@ create table "oauth_access_token"
   "created_at" TIMESTAMP NOT NULL
 );
 
+create table "oauth_authorization_code"
+(
+  "id" BIGINT AUTO_INCREMENT PRIMARY KEY,
+  "account_id" BIGINT NOT NULL,
+  "oauth_client_id" BIGINT NOT NULL,
+  "code" VARCHAR(100) NOT NULL,
+  "redirect_uri" VARCHAR(2000) NOT NULL,
+  "created_at" TIMESTAMP NOT NULL
+);
+
+
 # --- !Downs
 
 drop table "account";
 drop table "oauth_client";
 drop table "oauth_access_token";
+drop table "oauth_authorization_code";

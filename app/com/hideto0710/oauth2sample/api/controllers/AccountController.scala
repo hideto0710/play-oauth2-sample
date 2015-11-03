@@ -1,20 +1,20 @@
 package com.hideto0710.oauth2sample.api.controllers
 
 import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
 import play.api.libs.json._
 import play.api.mvc.{Action, Controller}
 import org.joda.time.DateTime
 import javax.inject.Inject
 import scalaoauth2.provider.OAuth2ProviderActionBuilders._
 
-import com.hideto0710.oauth2sample.api.models.{OAuthAccessTokenDAO, OAuthClientDAO, Account, AccountDAO}
+import com.hideto0710.oauth2sample.api.models._
 import com.hideto0710.oauth2sample.api.services.{AccountRequest, AccountsResponse, AccountResponse}
 
 class AccountController @Inject()(
   accountDAO: AccountDAO,
   oauthClientDAO: OAuthClientDAO,
-  oAuthAccessToken: OAuthAccessTokenDAO
+  oAuthAccessToken: OAuthAccessTokenDAO,
+  oAuthAuthorizationCodeDAO: OAuthAuthorizationCodeDAO
 ) extends Controller {
 
   def insertAccount() = Action.async(parse.json) { implicit request =>
@@ -35,7 +35,7 @@ class AccountController @Inject()(
     }
   }
 
-  def getAccount(id: Long) = AuthorizedAction(new MyDataHandler(accountDAO, oauthClientDAO, oAuthAccessToken)).async { implicit request =>
+  def getAccount(id: Long) = AuthorizedAction(new MyDataHandler(accountDAO, oauthClientDAO, oAuthAccessToken, oAuthAuthorizationCodeDAO)).async { implicit request =>
     print(request.authInfo)
     accountDAO.select(id).map {
       case Some(a) => Ok(Json.toJson(

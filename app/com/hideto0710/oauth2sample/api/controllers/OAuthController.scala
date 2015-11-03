@@ -15,18 +15,20 @@ class OAuthController @Inject()(
   dbConfigProvider: DatabaseConfigProvider,
   accountDAO: AccountDAO,
   oauthClientDAO: OAuthClientDAO,
-  oAuthAccessToken: OAuthAccessTokenDAO
+  oAuthAccessToken: OAuthAccessTokenDAO,
+  oAuthAuthorizationCodeDAO: OAuthAuthorizationCodeDAO
 ) extends Controller with OAuth2Provider {
 
   def accessToken = Action.async { implicit request =>
-    issueAccessToken(new MyDataHandler(accountDAO, oauthClientDAO, oAuthAccessToken))
+    issueAccessToken(new MyDataHandler(accountDAO, oauthClientDAO, oAuthAccessToken, oAuthAuthorizationCodeDAO))
   }
 }
 
 class MyDataHandler @Inject()(
   accountDAO: AccountDAO,
   oAuthClientDAO: OAuthClientDAO,
-  oAuthAccessTokenDAO: OAuthAccessTokenDAO
+  oAuthAccessTokenDAO: OAuthAccessTokenDAO,
+  oAuthAuthorizationCodeDAO: OAuthAuthorizationCodeDAO
 ) extends DataHandler[Account] {
 
   private val accessTokenExpireSeconds = 3600
@@ -64,13 +66,13 @@ class MyDataHandler @Inject()(
     }
   }
 
-  def refreshAccessToken(authInfo: AuthInfo[Account], refreshToken: String): Future[AccessToken] = ???
+  def findAuthInfoByCode(code: String): Future[Option[AuthInfo[Account]]] =
+    oAuthAuthorizationCodeDAO.findByCode(code).map(_.map( a =>
+      AuthInfo(a.account, Some(a.oauthClient.clientId), None, a.oauthClient.redirectUri)
+    ))
 
-  def findAuthInfoByCode(code: String): Future[Option[AuthInfo[Account]]] = ???
-
-  def findAuthInfoByRefreshToken(refreshToken: String): Future[Option[AuthInfo[Account]]] = ???
-
-  def deleteAuthCode(code: String): Future[Unit] = ???
+  def deleteAuthCode(code: String): Future[Unit] =
+    oAuthAuthorizationCodeDAO.delete(code).map(_ -> ())
 
   def findAccessToken(token: String): Future[Option[AccessToken]] =
     oAuthAccessTokenDAO.findByAccessToken(token).map(_.map(toAccessToken))
@@ -80,5 +82,9 @@ class MyDataHandler @Inject()(
       AuthInfo(a.account, Some(a.oauthClient.clientId), None, a.oauthClient.redirectUri)
     ))
   }
+
+  def refreshAccessToken(authInfo: AuthInfo[Account], refreshToken: String): Future[AccessToken] = ???
+
+  def findAuthInfoByRefreshToken(refreshToken: String): Future[Option[AuthInfo[Account]]] = ???
 
 }
