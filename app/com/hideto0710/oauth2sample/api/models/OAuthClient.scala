@@ -46,12 +46,6 @@ class OAuthClientDAO @Inject()(
     db.run(queryWithId).map(r => r)
   }
 
-  def all(): Future[Option[Seq[OAuthClient]]] = {
-    db.run(oAuthClients.result).map(oc =>
-      if (oc.nonEmpty) Some(oc) else None
-    )
-  }
-
   def select(id: Long): Future[Option[OAuthClient]] = {
     db.run(oAuthClients.filter(_.id === id).result).map(_.headOption)
   }
