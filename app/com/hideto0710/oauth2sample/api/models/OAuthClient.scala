@@ -68,7 +68,7 @@ class OAuthClientDAO @Inject()(
       .filter(_.clientSecret === clientSecret)
       .filter(_.grantType === grantType)
       .result
-    ).map(_ != 0)
+    ).map(_.nonEmpty)
   }
 
   def findByClientId(clientId: String): Future[Option[OAuthClient]] = {
