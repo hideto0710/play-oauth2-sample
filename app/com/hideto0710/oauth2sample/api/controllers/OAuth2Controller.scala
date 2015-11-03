@@ -13,18 +13,24 @@ import javax.inject.Inject
 
 import com.hideto0710.oauth2sample.api.models._
 
-class OAuth2Controller @Inject()(dbConfigProvider: DatabaseConfigProvider) extends Controller with OAuth2Provider {
+class OAuth2Controller @Inject()(
+  dbConfigProvider: DatabaseConfigProvider,
+  userDAO: UserDAO,
+  oauthClientDAO: OAuthClientDAO
+) extends Controller with OAuth2Provider {
 
   def accessToken = Action.async { implicit request =>
-    issueAccessToken(new MyDataHandler())
+    issueAccessToken(new MyDataHandler(userDAO, oauthClientDAO))
   }
 }
 
-class MyDataHandler extends DataHandler[User] {
+class MyDataHandler @Inject()(userDAO: UserDAO, oauthClientDAO: OAuthClientDAO) extends DataHandler[User] {
 
-  def validateClient(clientCredential: ClientCredential, grantType: String): Future[Boolean] = ???
+  def validateClient(clientCredential: ClientCredential, grantType: String): Future[Boolean] =
+    oauthClientDAO.validate(clientCredential.clientId, clientCredential.clientSecret.getOrElse(""), grantType)
 
-  def findUser(username: String, password: String): Future[Option[User]] = ???
+  def findUser(username: String, password: String): Future[Option[User]] =
+    userDAO.authenticate(username, password)
 
   def createAccessToken(authInfo: AuthInfo[User]): Future[AccessToken] = ???
 
@@ -36,7 +42,8 @@ class MyDataHandler extends DataHandler[User] {
 
   def findAuthInfoByRefreshToken(refreshToken: String): Future[Option[AuthInfo[User]]] = ???
 
-  def findClientUser(clientCredential: ClientCredential, scope: Option[String]): Future[Option[User]] = ???
+  def findClientUser(clientCredential: ClientCredential, scope: Option[String]): Future[Option[User]] =
+    oauthClientDAO.findClientCredentials(clientCredential.clientId, clientCredential.clientSecret.getOrElse(""))
 
   def deleteAuthCode(code: String): Future[Unit] = ???
 
