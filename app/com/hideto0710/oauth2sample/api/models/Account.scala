@@ -62,8 +62,10 @@ class AccountDAO @Inject()(
   }
 
   def authenticate(email: String, password: String): Future[Option[Account]] = {
-    db.run(accounts.filter(_.email === email).filter(_.password === password).result).map(r =>
-      r.headOption
-    )
+    db.run(accounts
+      .filter(_.email === email)
+      .filter(_.password === digestString(password))
+      .result
+    ).map(r => r.headOption)
   }
 }
