@@ -16,15 +16,20 @@ import com.hideto0710.oauth2sample.api.models._
 class OAuthController @Inject()(
   dbConfigProvider: DatabaseConfigProvider,
   accountDAO: AccountDAO,
-  oauthClientDAO: OAuthClientDAO
+  oauthClientDAO: OAuthClientDAO,
+  oAuthAccessToken: OAuthAccessTokenDAO
 ) extends Controller with OAuth2Provider {
 
   def accessToken = Action.async { implicit request =>
-    issueAccessToken(new MyDataHandler(accountDAO, oauthClientDAO))
+    issueAccessToken(new MyDataHandler(accountDAO, oauthClientDAO, oAuthAccessToken))
   }
 }
 
-class MyDataHandler @Inject()(accountDAO: AccountDAO, oauthClientDAO: OAuthClientDAO) extends DataHandler[Account] {
+class MyDataHandler @Inject()(
+  accountDAO: AccountDAO,
+  oauthClientDAO: OAuthClientDAO,
+  oAuthAccessToken: OAuthAccessTokenDAO
+) extends DataHandler[Account] {
 
   def validateClient(clientCredential: ClientCredential, grantType: String): Future[Boolean] =
     oauthClientDAO.validate(clientCredential.clientId, clientCredential.clientSecret.getOrElse(""), grantType)
@@ -34,7 +39,8 @@ class MyDataHandler @Inject()(accountDAO: AccountDAO, oauthClientDAO: OAuthClien
 
   def createAccessToken(authInfo: AuthInfo[Account]): Future[AccessToken] = ???
 
-  def getStoredAccessToken(authInfo: AuthInfo[Account]): Future[Option[AccessToken]] = ???
+  def getStoredAccessToken(authInfo: AuthInfo[Account]): Future[Option[AccessToken]] =
+    oAuthAccessToken.findByAuthorized(authInfo.user, authInfo.clientId.getOrElse(""))
 
   def refreshAccessToken(authInfo: AuthInfo[Account], refreshToken: String): Future[AccessToken] = ???
 

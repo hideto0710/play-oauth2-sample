@@ -19,7 +19,18 @@ create table "oauth_client"
   "created_at" TIMESTAMP NOT NULL
 );
 
+create table "oauth_access_token"
+(
+  "id" BIGINT AUTO_INCREMENT PRIMARY KEY,
+  "account_id" BIGINT NOT NULL,
+  "oauth_client_id" BIGINT NOT NULL,
+  "access_token" VARCHAR(100) NOT NULL,
+  "refresh_token" VARCHAR(100) NOT NULL,
+  "created_at" TIMESTAMP NOT NULL
+);
+
 # --- !Downs
 
 drop table "account";
 drop table "oauth_client";
+drop table "oauth_access_token";

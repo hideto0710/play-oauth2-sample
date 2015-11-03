@@ -25,7 +25,7 @@ class OAuthClientDAO @Inject()(
   import driver.api._
   import com.github.tototoshi.slick.H2JodaSupport._
 
-  private class OAuthClientTable(tag: Tag) extends Table[OAuthClient](tag, "oauth_client") {
+  class OAuthClientTable(tag: Tag) extends Table[OAuthClient](tag, "oauth_client") {
 
     def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
     def ownerId = column[Long]("owner_id")
