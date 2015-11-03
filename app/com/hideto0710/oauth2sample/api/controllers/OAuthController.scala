@@ -13,42 +13,42 @@ import javax.inject.Inject
 
 import com.hideto0710.oauth2sample.api.models._
 
-class OAuth2Controller @Inject()(
+class OAuthController @Inject()(
   dbConfigProvider: DatabaseConfigProvider,
-  userDAO: UserDAO,
+  accountDAO: AccountDAO,
   oauthClientDAO: OAuthClientDAO
 ) extends Controller with OAuth2Provider {
 
   def accessToken = Action.async { implicit request =>
-    issueAccessToken(new MyDataHandler(userDAO, oauthClientDAO))
+    issueAccessToken(new MyDataHandler(accountDAO, oauthClientDAO))
   }
 }
 
-class MyDataHandler @Inject()(userDAO: UserDAO, oauthClientDAO: OAuthClientDAO) extends DataHandler[User] {
+class MyDataHandler @Inject()(accountDAO: AccountDAO, oauthClientDAO: OAuthClientDAO) extends DataHandler[Account] {
 
   def validateClient(clientCredential: ClientCredential, grantType: String): Future[Boolean] =
     oauthClientDAO.validate(clientCredential.clientId, clientCredential.clientSecret.getOrElse(""), grantType)
 
-  def findUser(username: String, password: String): Future[Option[User]] =
-    userDAO.authenticate(username, password)
+  def findUser(username: String, password: String): Future[Option[Account]] =
+    accountDAO.authenticate(username, password)
 
-  def createAccessToken(authInfo: AuthInfo[User]): Future[AccessToken] = ???
+  def createAccessToken(authInfo: AuthInfo[Account]): Future[AccessToken] = ???
 
-  def getStoredAccessToken(authInfo: AuthInfo[User]): Future[Option[AccessToken]] = ???
+  def getStoredAccessToken(authInfo: AuthInfo[Account]): Future[Option[AccessToken]] = ???
 
-  def refreshAccessToken(authInfo: AuthInfo[User], refreshToken: String): Future[AccessToken] = ???
+  def refreshAccessToken(authInfo: AuthInfo[Account], refreshToken: String): Future[AccessToken] = ???
 
-  def findAuthInfoByCode(code: String): Future[Option[AuthInfo[User]]] = ???
+  def findAuthInfoByCode(code: String): Future[Option[AuthInfo[Account]]] = ???
 
-  def findAuthInfoByRefreshToken(refreshToken: String): Future[Option[AuthInfo[User]]] = ???
+  def findAuthInfoByRefreshToken(refreshToken: String): Future[Option[AuthInfo[Account]]] = ???
 
-  def findClientUser(clientCredential: ClientCredential, scope: Option[String]): Future[Option[User]] =
+  def findClientUser(clientCredential: ClientCredential, scope: Option[String]): Future[Option[Account]] =
     oauthClientDAO.findClientCredentials(clientCredential.clientId, clientCredential.clientSecret.getOrElse(""))
 
   def deleteAuthCode(code: String): Future[Unit] = ???
 
   def findAccessToken(token: String): Future[Option[AccessToken]] = ???
 
-  def findAuthInfoByAccessToken(accessToken: AccessToken): Future[Option[AuthInfo[User]]] = ???
+  def findAuthInfoByAccessToken(accessToken: AccessToken): Future[Option[AuthInfo[Account]]] = ???
 
 }

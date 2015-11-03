@@ -1,6 +1,6 @@
 # --- !Ups
 
-create table "user" (
+create table "account" (
   "id" BIGINT AUTO_INCREMENT PRIMARY KEY,
   "name" VARCHAR(100) NOT NULL,
   "email" VARCHAR(500) NOT NULL,
@@ -21,5 +21,5 @@ create table "oauth_client"
 
 # --- !Downs
 
-drop table "user";
+drop table "account";
 drop table "oauth_client";

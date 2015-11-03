@@ -19,13 +19,13 @@ case class OAuthClient(
 
 class OAuthClientDAO @Inject()(
   protected val dbConfigProvider: DatabaseConfigProvider,
-  userDAO: UserDAO
+  accountDAO: AccountDAO
 ) extends HasDatabaseConfigProvider[JdbcProfile] {
 
   import driver.api._
   import com.github.tototoshi.slick.H2JodaSupport._
 
-  private class OauthClientTable(tag: Tag) extends Table[OAuthClient](tag, "oauth_client") {
+  private class OAuthClientTable(tag: Tag) extends Table[OAuthClient](tag, "oauth_client") {
 
     def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
     def ownerId = column[Long]("owner_id")
@@ -38,32 +38,32 @@ class OAuthClientDAO @Inject()(
     def * = (id.?, ownerId, grantType, clientId, clientSecret, redirectUri.?, createdAt) <> (OAuthClient.tupled, OAuthClient.unapply)
   }
 
-  private val oauthClientTable = TableQuery[OauthClientTable]
-  private val users = TableQuery[userDAO.UserTable]
+  private val oAuthClients = TableQuery[OAuthClientTable]
+  private val accounts = TableQuery[accountDAO.AccountTable]
 
   def insert(oc: OAuthClient): Future[Long] = {
-    val queryWithId = oauthClientTable returning oauthClientTable.map(_.id) += oc
+    val queryWithId = oAuthClients returning oAuthClients.map(_.id) += oc
     db.run(queryWithId).map(r => r)
   }
 
   def all(): Future[Option[Seq[OAuthClient]]] = {
-    db.run(oauthClientTable.result).map(oc =>
+    db.run(oAuthClients.result).map(oc =>
       if (oc.nonEmpty) Some(oc) else None
     )
   }
 
   def select(id: Long): Future[Option[OAuthClient]] = {
-    db.run(oauthClientTable.filter(_.id === id).result).map(_.headOption)
+    db.run(oAuthClients.filter(_.id === id).result).map(_.headOption)
   }
 
   def delete(id: Long): Future[Option[Int]] = {
-    db.run(oauthClientTable.filter(_.id === id).delete).map(i =>
+    db.run(oAuthClients.filter(_.id === id).delete).map(i =>
       if (i == 0) None else Some(i)
     )
   }
 
   def validate(clientId: String, clientSecret: String, grantType: String): Future[Boolean] = {
-    db.run(oauthClientTable
+    db.run(oAuthClients
       .filter(_.clientId === clientId)
       .filter(_.clientSecret === clientSecret)
       .filter(_.grantType === grantType)
@@ -72,19 +72,19 @@ class OAuthClientDAO @Inject()(
   }
 
   def findByClientId(clientId: String): Future[Option[OAuthClient]] = {
-    db.run(oauthClientTable
+    db.run(oAuthClients
       .filter(_.clientId === clientId)
       .result
     ).map(_.headOption)
   }
 
-  def findClientCredentials(clientId: String, clientSecret: String): Future[Option[User]] = {
+  def findClientCredentials(clientId: String, clientSecret: String): Future[Option[Account]] = {
     db.run((for {
-      oc <- oauthClientTable
+      oc <- oAuthClients
         .filter(_.clientId === clientId)
         .filter(_.clientSecret === clientSecret)
         .filter(_.grantType === "client_credentials")
-      u <- users if oc.ownerId === u.id
-    } yield u).result).map(_.headOption)
+      a <- accounts if oc.ownerId === a.id
+    } yield a).result).map(_.headOption)
   }
 }

@@ -23,7 +23,7 @@ class OAuthClientController @Inject()(oAuthClientDAO: OAuthClientDAO) extends Co
             ocr.clientId,
             ocr.clientSecret,
             ocr.redirectUri,
-            UserResponse.dateTimeToString(now)))
+            AccountResponse.dateTimeToString(now)))
         )
       )
     }.recoverTotal {
@@ -40,7 +40,7 @@ class OAuthClientController @Inject()(oAuthClientDAO: OAuthClientDAO) extends Co
           oc.clientId,
           oc.clientSecret,
           oc.redirectUri,
-          UserResponse.dateTimeToString(oc.createdAt))
+          AccountResponse.dateTimeToString(oc.createdAt))
       ))
       case None => NotFound
     }
