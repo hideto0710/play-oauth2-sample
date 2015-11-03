@@ -72,7 +72,7 @@ class MyDataHandler @Inject()(
     ))
 
   def deleteAuthCode(code: String): Future[Unit] =
-    oAuthAuthorizationCodeDAO.delete(code).map(_ -> ())
+    oAuthAuthorizationCodeDAO.delete(code).map(_ => ())
 
   def findAccessToken(token: String): Future[Option[AccessToken]] =
     oAuthAccessTokenDAO.findByAccessToken(token).map(_.map(toAccessToken))
