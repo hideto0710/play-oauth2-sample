@@ -29,14 +29,27 @@ class MyDataHandler @Inject()(
   oAuthAccessTokenDAO: OAuthAccessTokenDAO
 ) extends DataHandler[Account] {
 
+  private val accessTokenExpireSeconds = 3600
+
+  private def toAccessToken[A<:OAuthAccessTokenTrait](accessToken: A) = AccessToken(
+    accessToken.accessToken,
+    Some(accessToken.refreshToken),
+    None,
+    Some(accessTokenExpireSeconds),
+    accessToken.createdAt.toDate
+  )
+
   def validateClient(clientCredential: ClientCredential, grantType: String): Future[Boolean] =
     oAuthClientDAO.validate(clientCredential.clientId, clientCredential.clientSecret.getOrElse(""), grantType)
+
+  def findUser(username: String, password: String): Future[Option[Account]] =
+    accountDAO.authenticate(username, password)
 
   def findClientUser(clientCredential: ClientCredential, scope: Option[String]): Future[Option[Account]] =
     oAuthClientDAO.findClientCredentials(clientCredential.clientId, clientCredential.clientSecret.getOrElse(""))
 
   def getStoredAccessToken(authInfo: AuthInfo[Account]): Future[Option[AccessToken]] =
-    oAuthAccessTokenDAO.findByAuthorized(authInfo.user, authInfo.clientId.getOrElse(""))
+    oAuthAccessTokenDAO.findByAuthorized(authInfo.user, authInfo.clientId.getOrElse("")).map(_.map(toAccessToken))
 
   def createAccessToken(authInfo: AuthInfo[Account]): Future[AccessToken] = {
     (for {
@@ -47,11 +60,9 @@ class MyDataHandler @Inject()(
     } yield oc) match {
       case Left(error) => throw error
       case Right(oc) =>
-        oAuthAccessTokenDAO.insertWithReturnToken(oAuthAccessTokenDAO.create(authInfo, oc))
+        oAuthAccessTokenDAO.insertWithReturnToken(oAuthAccessTokenDAO.create(authInfo, oc)).map(toAccessToken)
     }
   }
-
-  def findUser(username: String, password: String): Future[Option[Account]] = accountDAO.authenticate(username, password)
 
   def refreshAccessToken(authInfo: AuthInfo[Account], refreshToken: String): Future[AccessToken] = ???
 
@@ -61,8 +72,13 @@ class MyDataHandler @Inject()(
 
   def deleteAuthCode(code: String): Future[Unit] = ???
 
-  def findAccessToken(token: String): Future[Option[AccessToken]] = ???
+  def findAccessToken(token: String): Future[Option[AccessToken]] =
+    oAuthAccessTokenDAO.findByAccessToken(token).map(_.map(toAccessToken))
 
-  def findAuthInfoByAccessToken(accessToken: AccessToken): Future[Option[AuthInfo[Account]]] = ???
+  def findAuthInfoByAccessToken(accessToken: AccessToken): Future[Option[AuthInfo[Account]]] = {
+    oAuthAccessTokenDAO.findDetailByAccessToken(accessToken.token).map(_.map( a =>
+      AuthInfo(a.account, Some(a.oauthClient.clientId), None, a.oauthClient.redirectUri)
+    ))
+  }
 
 }

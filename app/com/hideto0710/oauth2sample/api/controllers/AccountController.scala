@@ -6,11 +6,16 @@ import play.api.libs.json._
 import play.api.mvc.{Action, Controller}
 import org.joda.time.DateTime
 import javax.inject.Inject
+import scalaoauth2.provider.OAuth2ProviderActionBuilders._
 
-import com.hideto0710.oauth2sample.api.models.{Account, AccountDAO}
+import com.hideto0710.oauth2sample.api.models.{OAuthAccessTokenDAO, OAuthClientDAO, Account, AccountDAO}
 import com.hideto0710.oauth2sample.api.services.{AccountRequest, AccountsResponse, AccountResponse}
 
-class AccountController @Inject()(accountDAO: AccountDAO) extends Controller {
+class AccountController @Inject()(
+  accountDAO: AccountDAO,
+  oauthClientDAO: OAuthClientDAO,
+  oAuthAccessToken: OAuthAccessTokenDAO
+) extends Controller {
 
   def insertAccount() = Action.async(parse.json) { implicit request =>
     request.body.validate[AccountRequest].map { ar =>
@@ -30,7 +35,8 @@ class AccountController @Inject()(accountDAO: AccountDAO) extends Controller {
     }
   }
 
-  def getAccount(id: Long) = Action.async { implicit request =>
+  def getAccount(id: Long) = AuthorizedAction(new MyDataHandler(accountDAO, oauthClientDAO, oAuthAccessToken)).async { implicit request =>
+    print(request.authInfo)
     accountDAO.select(id).map {
       case Some(a) => Ok(Json.toJson(
         AccountResponse(a.id.get, a.name, a.email, AccountResponse.dateTimeToString(a.createdAt))

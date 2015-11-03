@@ -8,7 +8,13 @@ import slick.driver.JdbcProfile
 import java.security.SecureRandom
 import org.joda.time.DateTime
 import javax.inject.Inject
-import scalaoauth2.provider.{AuthInfo, AccessToken}
+import scalaoauth2.provider.AuthInfo
+
+sealed trait OAuthAccessTokenTrait {
+  val accessToken: String
+  val refreshToken: String
+  val createdAt: DateTime
+}
 
 case class OAuthAccessToken(
   id: Option[Long],
@@ -17,7 +23,18 @@ case class OAuthAccessToken(
   accessToken: String,
   refreshToken: String,
   createdAt: DateTime
-)
+) extends OAuthAccessTokenTrait
+
+case class OAuthAccessTokenWithDetail(
+  id: Option[Long],
+  accountId: Long,
+  account: Account,
+  oauthClientId: Long,
+  oauthClient: OAuthClient,
+  accessToken: String,
+  refreshToken: String,
+  createdAt: DateTime
+) extends OAuthAccessTokenTrait
 
 class OAuthAccessTokenDAO @Inject()(
   protected val dbConfigProvider: DatabaseConfigProvider,
@@ -44,22 +61,12 @@ class OAuthAccessTokenDAO @Inject()(
   private val oAuthClients = TableQuery[oAuthClientDAO.OAuthClientTable]
   private val accounts = TableQuery[accountDAO.AccountTable]
 
-  private val accessTokenExpireSeconds = 3600
-
-  private def toAccessToken(accessToken: OAuthAccessToken) = AccessToken(
-    accessToken.accessToken,
-    Some(accessToken.refreshToken),
-    None,
-    Some(accessTokenExpireSeconds),
-    accessToken.createdAt.toDate
-  )
-
   def insert(oat: OAuthAccessToken): Future[Long] = {
     db.run((oAuthAccessTokens returning oAuthAccessTokens.map(_.id)) += oat).map(r => r)
   }
 
-  def insertWithReturnToken(oat: OAuthAccessToken): Future[AccessToken] = {
-    insert(oat).map(r => toAccessToken(oat.copy(id = Some(r))))
+  def insertWithReturnToken(oat: OAuthAccessToken): Future[OAuthAccessToken] = {
+    insert(oat).map(r => oat.copy(id = Some(r)))
   }
 
   def create(authInfo: AuthInfo[Account], oAuthClient: OAuthClient) = {
@@ -84,12 +91,41 @@ class OAuthAccessTokenDAO @Inject()(
     ).map(_.headOption)
   }
 
-  def findByAuthorized(account: Account, clientId: String): Future[Option[AccessToken]] = {
+  def findDetailByAccessToken(accessToken: String): Future[Option[OAuthAccessTokenWithDetail]] = {
+    for {
+      result <- db.run((for {
+        oat <- oAuthAccessTokens
+          .filter(_.accessToken === accessToken)
+        as <- accounts
+          .filter(_.id === oat.id)
+        oc <- oAuthClients
+          .filter(_.id === oat.oauthClientId)
+      } yield (oat, as, oc)).result)
+    } yield {
+      result.headOption match {
+        case Some(h) =>
+          val oAuthAccessToken = h._1
+          Some(OAuthAccessTokenWithDetail(
+            oAuthAccessToken.id,
+            oAuthAccessToken.accountId,
+            h._2,
+            oAuthAccessToken.oauthClientId,
+            h._3,
+            oAuthAccessToken.accessToken,
+            oAuthAccessToken.refreshToken,
+            oAuthAccessToken.createdAt
+          ))
+        case None => None
+      }
+    }
+  }
+
+  def findByAuthorized(account: Account, clientId: String): Future[Option[OAuthAccessToken]] = {
     db.run((for {
       oc <- oAuthClients
         .filter(_.clientId === clientId)
       oat <- oAuthAccessTokens
         .filter(_.accountId === account.id)
-    } yield oat).result).map(_.map(toAccessToken).headOption)
+    } yield oat).result).map(_.headOption)
   }
 }
