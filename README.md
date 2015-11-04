@@ -1,9 +1,20 @@
 # play-oauth2-sample
 The OAuth 2.0 server-side implementation sample with Play Framework.
 
-## Client credentials
+## TODOs
 
-### Request
+- [x] Client Credentials Grant
+- [x] Resource Owner Password Credentials Grant
+- [x] Authorization Code Grant
+- [ ] Add Refresh Token.
+- [ ] Add scope to OAuthAuthorizationCode.
+- [ ] Add sample view.
+
+## Prepare Data
+[preinsert.md]("./preinsert.,d")
+
+## POST /oauth/access_token
+### Client Credentials
 
 ```
 {
@@ -13,16 +24,19 @@ The OAuth 2.0 server-side implementation sample with Play Framework.
 }
 ```
 
-### OAuth Flow
+### Authorization Code Grant
 
-1. validateClient(...): Future[Boolean]
-1. findClientUser(...): Future[Option[Account]]
-1. getStoredAccessToken(...): Future[Option[AccessToken]]
-1. createAccessToken(...): Future[AccessToken]
+```
+{
+  "client_id": "alice_client_id",
+  "client_secret": "alice_client_secret",
+  "redirect_uri": "http://localhost:3000/callback",
+  "code": "bob_code",
+  "grant_type": "authorization_code"
+}
+```
 
-## Password
-
-### Request
+### Password
 
 ```
 {
@@ -33,10 +47,3 @@ The OAuth 2.0 server-side implementation sample with Play Framework.
   "grant_type": "password"
 }
 ```
-
-### OAuth Flow
-
-1. validateClient(...): Future[Boolean]
-1. findUser(...): : Future[Option[Account]]
-1. getStoredAccessToken(...): Future[Option[AccessToken]]
-1. createAccessToken(...): Future[AccessToken]
