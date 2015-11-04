@@ -83,7 +83,18 @@ class MyDataHandler @Inject()(
     ))
   }
 
-  def refreshAccessToken(authInfo: AuthInfo[Account], refreshToken: String): Future[AccessToken] = ???
+  def refreshAccessToken(authInfo: AuthInfo[Account], refreshToken: String): Future[AccessToken] = {
+    (for {
+      ci <- authInfo.clientId.toRight(new InvalidClient()).right
+      optionOc <- Await.ready(oAuthClientDAO.findByClientId(ci), Duration.Inf)
+        .value.get.toOption.toRight(new InvalidClient()).right
+      oc <- optionOc.toRight(new InvalidClient()).right
+    } yield oc) match {
+      case Left(error) => throw error
+      case Right(oc) =>
+        oAuthAccessTokenDAO.refresh(authInfo, oc).map(toAccessToken)
+    }
+  }
 
   def findAuthInfoByRefreshToken(refreshToken: String): Future[Option[AuthInfo[Account]]] = ???
 

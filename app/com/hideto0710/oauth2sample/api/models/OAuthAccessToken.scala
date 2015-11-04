@@ -84,6 +84,21 @@ class OAuthAccessTokenDAO @Inject()(
     )
   }
 
+  def delete(account: Account, oAuthClient: OAuthClient): Future[Option[Int]] = {
+    db.run(oAuthAccessTokens
+      .filter(_.accountId === account.id)
+      .filter(_.oauthClientId === oAuthClient.id)
+      .delete
+    ).map(i => if (i == 0) None else Some(i))
+  }
+
+  def refresh(authInfo: AuthInfo[Account], oAuthClient: OAuthClient): Future[OAuthAccessToken] = {
+    for {
+      i <- delete(authInfo.user, oAuthClient)
+      oat <- insertWithReturnToken(create(authInfo, oAuthClient))
+    } yield oat
+  }
+
   def findByAccessToken(accessToken: String): Future[Option[OAuthAccessToken]] = {
     db.run(oAuthAccessTokens
       .filter(_.accessToken === accessToken)
@@ -94,12 +109,9 @@ class OAuthAccessTokenDAO @Inject()(
   def findDetailByAccessToken(accessToken: String): Future[Option[OAuthAccessTokenWithDetail]] = {
     for {
       result <- db.run((for {
-        oat <- oAuthAccessTokens
-          .filter(_.accessToken === accessToken)
-        as <- accounts
-          .filter(_.id === oat.accountId)
-        oc <- oAuthClients
-          .filter(_.id === oat.oauthClientId)
+        oat <- oAuthAccessTokens.filter(_.accessToken === accessToken)
+        as <- accounts.filter(_.id === oat.accountId)
+        oc <- oAuthClients.filter(_.id === oat.oauthClientId)
       } yield (oat, as, oc)).result)
     } yield {
       result.headOption match {
