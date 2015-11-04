@@ -18,7 +18,7 @@ create table "oauth_client"
   "redirect_uri" VARCHAR(2000),
   "created_at" TIMESTAMP NOT NULL,
   CONSTRAINT oauth_client_owner_id_fkey foreign key ("owner_id")
-  REFERENCES "account" ("id") ON DELETE CASCADE,
+    REFERENCES "account" ("id") ON DELETE CASCADE,
   CONSTRAINT oauth_client_client_id_key unique ("client_id")
 );
 
@@ -31,9 +31,9 @@ create table "oauth_access_token"
   "refresh_token" VARCHAR(100) NOT NULL,
   "created_at" TIMESTAMP NOT NULL,
   CONSTRAINT oauth_access_token_account_id_fkey FOREIGN KEY ("account_id")
-  REFERENCES "account" ("id") ON DELETE CASCADE,
+    REFERENCES "account" ("id") ON DELETE CASCADE,
   CONSTRAINT oauth_access_token_oauth_client_id_fkey FOREIGN KEY ("oauth_client_id")
-  REFERENCES "oauth_client" ("id") ON DELETE CASCADE
+    REFERENCES "oauth_client" ("id") ON DELETE CASCADE
 );
 
 create table "oauth_authorization_code"
@@ -45,9 +45,9 @@ create table "oauth_authorization_code"
   "redirect_uri" VARCHAR(2000) NOT NULL,
   "created_at" TIMESTAMP NOT NULL,
   CONSTRAINT oauth_authorization_code_account_id_fkey FOREIGN KEY ("account_id")
-  REFERENCES "account" ("id") ON DELETE CASCADE,
+    REFERENCES "account" ("id") ON DELETE CASCADE,
   CONSTRAINT oauth_authorization_code_oauth_client_id_fkey FOREIGN KEY ("oauth_client_id")
-  REFERENCES "oauth_client" ("id") ON DELETE CASCADE
+    REFERENCES "oauth_client" ("id") ON DELETE CASCADE
 );
 
 
