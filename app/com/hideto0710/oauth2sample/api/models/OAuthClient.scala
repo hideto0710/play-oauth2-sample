@@ -60,7 +60,7 @@ class OAuthClientDAO @Inject()(
     db.run(oAuthClients
       .filter(_.clientId === clientId)
       .filter(_.clientSecret === clientSecret)
-      .filter(_.grantType === grantType)
+      .filter(row => row.grantType === grantType || grantType == "refresh_token")
       .result
     ).map(_.nonEmpty)
   }

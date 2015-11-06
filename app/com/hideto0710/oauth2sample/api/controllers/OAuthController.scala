@@ -96,6 +96,10 @@ class MyDataHandler @Inject()(
     }
   }
 
-  def findAuthInfoByRefreshToken(refreshToken: String): Future[Option[AuthInfo[Account]]] = ???
+  def findAuthInfoByRefreshToken(refreshToken: String): Future[Option[AuthInfo[Account]]] = {
+    oAuthAccessTokenDAO.findByRefreshToken(refreshToken).map(_.map( a =>
+      AuthInfo(a.account, Some(a.oauthClient.clientId), None, a.oauthClient.redirectUri)
+    ))
+  }
 
 }
