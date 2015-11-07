@@ -106,56 +106,44 @@ class OAuthAccessTokenDAO @Inject()(
     ).map(_.headOption)
   }
 
+
+  private def getOAuthTokenDetail(oat: OAuthAccessToken, a: Account, oc: OAuthClient): OAuthAccessTokenWithDetail = {
+    OAuthAccessTokenWithDetail(
+      oat.id,
+      oat.accountId,
+      a,
+      oat.oauthClientId,
+      oc,
+      oat.accessToken,
+      oat.refreshToken,
+      oat.createdAt
+    )
+  }
+
   def findByRefreshToken(refreshToken: String): Future[Option[OAuthAccessTokenWithDetail]] = {
-    for {
-      result <- db.run((for {
-        oat <- oAuthAccessTokens.filter(_.refreshToken === refreshToken)
-        as <- accounts.filter(_.id === oat.accountId)
-        oc <- oAuthClients.filter(_.id === oat.oauthClientId)
-      } yield (oat, as, oc)).result)
-    } yield {
-      result.headOption match {
-        case Some(h) =>
-          val oAuthAccessToken = h._1
-          Some(OAuthAccessTokenWithDetail(
-            oAuthAccessToken.id,
-            oAuthAccessToken.accountId,
-            h._2,
-            oAuthAccessToken.oauthClientId,
-            h._3,
-            oAuthAccessToken.accessToken,
-            oAuthAccessToken.refreshToken,
-            oAuthAccessToken.createdAt
-          ))
+    db.run((for {
+      oat <- oAuthAccessTokens.filter(_.refreshToken === refreshToken)
+      a <- accounts.filter(_.id === oat.accountId)
+      oc <- oAuthClients.filter(_.id === oat.oauthClientId)
+    } yield (oat, a, oc)).result).map(r =>
+      r.headOption match {
+        case Some(h) => Some(getOAuthTokenDetail(h._1, h._2, h._3))
         case None => None
       }
-    }
+    )
   }
 
   def findDetailByAccessToken(accessToken: String): Future[Option[OAuthAccessTokenWithDetail]] = {
-    for {
-      result <- db.run((for {
-        oat <- oAuthAccessTokens.filter(_.accessToken === accessToken)
-        as <- accounts.filter(_.id === oat.accountId)
-        oc <- oAuthClients.filter(_.id === oat.oauthClientId)
-      } yield (oat, as, oc)).result)
-    } yield {
-      result.headOption match {
-        case Some(h) =>
-          val oAuthAccessToken = h._1
-          Some(OAuthAccessTokenWithDetail(
-            oAuthAccessToken.id,
-            oAuthAccessToken.accountId,
-            h._2,
-            oAuthAccessToken.oauthClientId,
-            h._3,
-            oAuthAccessToken.accessToken,
-            oAuthAccessToken.refreshToken,
-            oAuthAccessToken.createdAt
-          ))
+    db.run((for {
+      oat <- oAuthAccessTokens.filter(_.accessToken === accessToken)
+      as <- accounts.filter(_.id === oat.accountId)
+      oc <- oAuthClients.filter(_.id === oat.oauthClientId)
+    } yield (oat, as, oc)).result).map( r =>
+      r.headOption match {
+        case Some(h) => Some(getOAuthTokenDetail(h._1, h._2, h._3))
         case None => None
       }
-    }
+    )
   }
 
   def findByAuthorized(account: Account, clientId: String): Future[Option[OAuthAccessToken]] = {
