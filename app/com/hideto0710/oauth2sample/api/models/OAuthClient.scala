@@ -13,6 +13,7 @@ case class OAuthClient(
   grantType: String,
   clientId: String,
   clientSecret: String,
+  scope: Option[String],
   redirectUri: Option[String],
   createdAt: DateTime
 )
@@ -32,10 +33,11 @@ class OAuthClientDAO @Inject()(
     def grantType = column[String]("grant_type")
     def clientId = column[String]("client_id")
     def clientSecret = column[String]("client_secret")
+    def scope = column[String]("scope")
     def redirectUri = column[String]("redirect_uri")
     def createdAt = column[DateTime]("created_at")
 
-    def * = (id.?, ownerId, grantType, clientId, clientSecret, redirectUri.?, createdAt) <> (OAuthClient.tupled, OAuthClient.unapply)
+    def * = (id.?, ownerId, grantType, clientId, clientSecret, scope.?, redirectUri.?, createdAt) <> (OAuthClient.tupled, OAuthClient.unapply)
   }
 
   private val oAuthClients = TableQuery[OAuthClientTable]

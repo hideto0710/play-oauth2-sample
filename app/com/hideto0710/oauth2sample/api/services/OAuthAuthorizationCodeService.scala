@@ -36,7 +36,6 @@ object OAuthAuthorizationCodeResponse {
 case class OAuthAuthorizationCodeRequest(
   accountId: Long,
   oauthClientId: Long,
-  code: String,
   redirectUri: String
 )
 
@@ -45,7 +44,6 @@ object OAuthAuthorizationCodeRequest {
   implicit val oAuthAuthorizationCodeRequest: Reads[OAuthAuthorizationCodeRequest] = (
     (__ \ "account_id").read[Long] and
     (__ \ "oauth_client_id").read[Long] and
-    (__ \ "code").read[String] and
     (__ \ "redirect_uri").read[String])(OAuthAuthorizationCodeRequest.apply _)
 
 }

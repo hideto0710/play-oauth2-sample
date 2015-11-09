@@ -13,6 +13,7 @@ case class OAuthClientResponse(
   grantType: String,
   clientId: String,
   clientSecret: String,
+  scope: Option[String],
   redirectUri: Option[String],
   createdAt: String
 )
@@ -29,6 +30,7 @@ object OAuthClientResponse {
       "grant_type" -> ocr.grantType,
       "client_id" -> ocr.clientId,
       "client_secret" -> ocr.clientSecret,
+      "scope" -> ocr.scope,
       "redirect_uri" -> ocr.redirectUri,
       "created_at" -> ocr.createdAt
     )
@@ -41,6 +43,7 @@ case class OAuthClientRequest(
   grantType: String,
   clientId: String,
   clientSecret: String,
+  scope: Option[String],
   redirectUri: Option[String]
 )
 
@@ -51,6 +54,7 @@ object OAuthClientRequest {
     (__ \ "grant_type").read[String] and
     (__ \ "client_id").read[String] and
     (__ \ "client_secret").read[String] and
+    (__ \ "scope").readNullable[String] and
     (__ \ "redirect_uri").readNullable[String])(OAuthClientRequest.apply _)
 
 }
