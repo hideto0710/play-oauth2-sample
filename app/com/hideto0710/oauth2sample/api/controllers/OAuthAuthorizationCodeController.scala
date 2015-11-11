@@ -26,30 +26,25 @@ class OAuthAuthorizationCodeController @Inject()(
     { implicit request =>
       (for {
         aId <- request.authInfo.user.id.toRight(Forbidden).right
-      } yield aId) match {
+        oacr <- request.body.validateOpt[OAuthAuthorizationCodeRequest].get.toRight(BadRequest).right
+        _ <- (if (oacr.accountId == aId) Some(true) else None).toRight(Forbidden).right
+      } yield oacr) match {
         case Left(error) => Future(error)
-        case Right(aid) =>
-          request.body.validate[OAuthAuthorizationCodeRequest].map { oacr =>
-            val now = DateTime.now()
-            val code = new Random(new SecureRandom()).alphanumeric.take(30).mkString
-            if (oacr.accountId == aid)
-              oAuthAuthorizationCodeDAO.insert(
-                OAuthAuthorizationCode(None, oacr.accountId, oacr.oauthClientId, code, oacr.redirectUri, now)
-              ).map(r =>
-                Ok(Json.toJson(
-                  OAuthAuthorizationCodeResponse(r,
-                    oacr.accountId,
-                    oacr.oauthClientId,
-                    code,
-                    oacr.redirectUri,
-                    AccountResponse.dateTimeToString(now)))
-                )
-              )
-            else
-              Future(Forbidden)
-          }.recoverTotal {
-            e => Future(BadRequest)
-          }
+        case Right(oacr) =>
+          val now = DateTime.now()
+          val code = new Random(new SecureRandom()).alphanumeric.take(30).mkString
+          oAuthAuthorizationCodeDAO.insert(
+            OAuthAuthorizationCode(None, oacr.accountId, oacr.oauthClientId, code, oacr.redirectUri, now)
+          ).map(r =>
+            Ok(Json.toJson(
+              OAuthAuthorizationCodeResponse(r,
+                oacr.accountId,
+                oacr.oauthClientId,
+                code,
+                oacr.redirectUri,
+                AccountResponse.dateTimeToString(now)))
+            )
+          )
       }
     }
 
