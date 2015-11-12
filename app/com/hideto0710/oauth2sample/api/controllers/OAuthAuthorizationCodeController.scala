@@ -5,11 +5,11 @@ import javax.inject.Inject
 
 import com.hideto0710.oauth2sample.api.models._
 import com.hideto0710.oauth2sample.api.services._
+import com.typesafe.config.ConfigFactory
 import org.joda.time.DateTime
 import play.api.libs.json._
 import play.api.mvc.{Action, Controller}
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.Random
 import scalaoauth2.provider.OAuth2ProviderActionBuilders._
@@ -20,6 +20,9 @@ class OAuthAuthorizationCodeController @Inject()(
   oAuthAccessToken: OAuthAccessTokenDAO,
   oAuthAuthorizationCodeDAO: OAuthAuthorizationCodeDAO
 ) extends Controller {
+
+  private val conf = ConfigFactory.load()
+  private val CodeLength = conf.getInt("oauth.auth_code.length")
 
   def insertOAuthAuthorizationCode() =
     AuthorizedAction(new MyDataHandler(accountDAO, oauthClientDAO, oAuthAccessToken, oAuthAuthorizationCodeDAO)).async(parse.json)
@@ -32,7 +35,7 @@ class OAuthAuthorizationCodeController @Inject()(
         case Left(error) => Future(error)
         case Right(oacr) =>
           val now = DateTime.now()
-          val code = new Random(new SecureRandom()).alphanumeric.take(30).mkString
+          val code = new Random(new SecureRandom()).alphanumeric.take(CodeLength).mkString
           oAuthAuthorizationCodeDAO.insert(
             OAuthAuthorizationCode(None, oacr.accountId, oacr.oauthClientId, code, oacr.redirectUri, now)
           ).map(r =>

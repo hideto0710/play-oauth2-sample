@@ -6,6 +6,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import play.api.mvc.{Controller, Action}
 import play.api.db.slick.DatabaseConfigProvider
 import javax.inject.Inject
+import com.typesafe.config.ConfigFactory
 import scalaoauth2.provider._
 import scalaoauth2.provider.{DataHandler, ClientCredential, AccessToken, AuthInfo}
 
@@ -31,13 +32,14 @@ class MyDataHandler @Inject()(
   oAuthAuthorizationCodeDAO: OAuthAuthorizationCodeDAO
 ) extends DataHandler[Account] {
 
-  private val accessTokenExpireSeconds = 3600
+  private val conf = ConfigFactory.load()
+  private val AccessTokenExpireSeconds = conf.getInt("oauth.access_token.expire")
 
   private def toAccessToken[A<:OAuthAccessTokenTrait](accessToken: A) = AccessToken(
     accessToken.accessToken,
     Some(accessToken.refreshToken),
     None,
-    Some(accessTokenExpireSeconds),
+    Some(AccessTokenExpireSeconds),
     accessToken.createdAt.toDate
   )
 

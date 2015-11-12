@@ -1,5 +1,7 @@
 package com.hideto0710.oauth2sample.api.models
 
+import com.typesafe.config.ConfigFactory
+
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Random
@@ -45,6 +47,9 @@ class OAuthAccessTokenDAO @Inject()(
   import driver.api._
   import com.github.tototoshi.slick.H2JodaSupport._
 
+  private val conf = ConfigFactory.load()
+  private val AccessTokenLength = conf.getInt("oauth.access_token.length")
+
   private class OAuthAccessTokenTable(tag: Tag) extends Table[OAuthAccessToken](tag, "oauth_access_token") {
 
     def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
@@ -70,8 +75,8 @@ class OAuthAccessTokenDAO @Inject()(
 
   def create(authInfo: AuthInfo[Account], oAuthClient: OAuthClient) = {
     def randomString(length: Int) = new Random(new SecureRandom()).alphanumeric.take(length).mkString
-    val accessToken = randomString(40)
-    val refreshToken = randomString(40)
+    val accessToken = randomString(AccessTokenLength)
+    val refreshToken = randomString(AccessTokenLength)
     val createdAt = DateTime.now()
     OAuthAccessToken(
       None,
