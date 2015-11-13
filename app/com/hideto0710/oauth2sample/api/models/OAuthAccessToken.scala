@@ -66,6 +66,7 @@ class OAuthAccessTokenDAO @Inject()(
   private val oAuthAccessTokens = TableQuery[OAuthAccessTokenTable]
   private val oAuthClients = TableQuery[oAuthClientDAO.OAuthClientTable]
   private val accounts = TableQuery[accountDAO.AccountTable]
+  private def randomString(length: Int) = new Random(new SecureRandom()).alphanumeric.take(length).mkString
 
   def insert(oat: OAuthAccessToken): Future[Long] =
     db.run((oAuthAccessTokens returning oAuthAccessTokens.map(_.id)) += oat).map(r => r)
@@ -74,7 +75,6 @@ class OAuthAccessTokenDAO @Inject()(
     insert(oat).map(r => oat.copy(id = Some(r)))
 
   def create(authInfo: AuthInfo[Account], oAuthClient: OAuthClient) = {
-    def randomString(length: Int) = new Random(new SecureRandom()).alphanumeric.take(length).mkString
     val accessToken = randomString(AccessTokenLength)
     val refreshToken = randomString(AccessTokenLength)
     val createdAt = DateTime.now()
