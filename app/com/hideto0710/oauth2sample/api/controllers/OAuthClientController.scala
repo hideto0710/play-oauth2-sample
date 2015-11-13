@@ -14,18 +14,19 @@ class OAuthClientController @Inject()(oAuthClientDAO: OAuthClientDAO) extends Co
 
   def insertOAuthClient() = Action.async(parse.json) { implicit request =>
     request.body.validate[OAuthClientRequest].map { ocr =>
+      val clientIdentifier = oAuthClientDAO.create()
       val now = DateTime.now()
       oAuthClientDAO.insert(
-        OAuthClient(
-          None, ocr.ownerId, ocr.grantType, ocr.clientId, ocr.clientSecret, ocr.scope, ocr.redirectUri, now
-        )
+        OAuthClient(None, ocr.ownerId, ocr.grantType,
+          clientIdentifier.id, clientIdentifier.secret,
+          ocr.scope, ocr.redirectUri, now)
       ).map(r =>
         Ok(Json.toJson(
           OAuthClientResponse(r,
             ocr.ownerId,
             ocr.grantType,
-            ocr.clientId,
-            ocr.clientSecret,
+            clientIdentifier.id,
+            clientIdentifier.secret,
             ocr.scope,
             ocr.redirectUri,
             AccountResponse.dateTimeToString(now)))

@@ -41,8 +41,6 @@ object OAuthClientResponse {
 case class OAuthClientRequest(
   ownerId: Long,
   grantType: String,
-  clientId: String,
-  clientSecret: String,
   scope: Option[String],
   redirectUri: Option[String]
 )
@@ -52,8 +50,6 @@ object OAuthClientRequest {
   implicit val oAuthClientRequest: Reads[OAuthClientRequest] = (
     (__ \ "owner_id").read[Long] and
     (__ \ "grant_type").read[String] and
-    (__ \ "client_id").read[String] and
-    (__ \ "client_secret").read[String] and
     (__ \ "scope").readNullable[String] and
     (__ \ "redirect_uri").readNullable[String])(OAuthClientRequest.apply _)
 

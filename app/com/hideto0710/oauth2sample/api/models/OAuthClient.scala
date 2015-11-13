@@ -2,10 +2,13 @@ package com.hideto0710.oauth2sample.api.models
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.Random
 import play.api.db.slick.{HasDatabaseConfigProvider, DatabaseConfigProvider}
 import slick.driver.JdbcProfile
 import org.joda.time.DateTime
 import javax.inject.Inject
+import java.security.SecureRandom
+import com.typesafe.config.ConfigFactory
 
 case class OAuthClient(
   id: Option[Long],
@@ -18,6 +21,11 @@ case class OAuthClient(
   createdAt: DateTime
 )
 
+case class ClientIdentifier(
+  id: String,
+  secret: String
+)
+
 class OAuthClientDAO @Inject()(
   protected val dbConfigProvider: DatabaseConfigProvider,
   accountDAO: AccountDAO
@@ -25,6 +33,10 @@ class OAuthClientDAO @Inject()(
 
   import driver.api._
   import com.github.tototoshi.slick.H2JodaSupport._
+
+  private val conf = ConfigFactory.load()
+  private val ClientIdLength = conf.getInt("oauth.client.id.length")
+  private val ClientSecretLength = conf.getInt("oauth.client.secret.length")
 
   class OAuthClientTable(tag: Tag) extends Table[OAuthClient](tag, "oauth_client") {
 
@@ -37,15 +49,23 @@ class OAuthClientDAO @Inject()(
     def redirectUri = column[String]("redirect_uri")
     def createdAt = column[DateTime]("created_at")
 
-    def * = (id.?, ownerId, grantType, clientId, clientSecret, scope.?, redirectUri.?, createdAt) <> (OAuthClient.tupled, OAuthClient.unapply)
+    def * = (id.?, ownerId, grantType, clientId, clientSecret, scope.?, redirectUri.?, createdAt) <>
+      (OAuthClient.tupled, OAuthClient.unapply)
   }
 
   private val oAuthClients = TableQuery[OAuthClientTable]
   private val accounts = TableQuery[accountDAO.AccountTable]
+  private def randomString(length: Int) = new Random(new SecureRandom()).alphanumeric.take(length).mkString
 
   def insert(oc: OAuthClient): Future[Long] = {
     val queryWithId = oAuthClients returning oAuthClients.map(_.id) += oc
     db.run(queryWithId).map(r => r)
+  }
+
+  def create() = {
+    val clientId = randomString(ClientIdLength)
+    val clientSecret = randomString(ClientSecretLength)
+    ClientIdentifier(clientId, clientSecret)
   }
 
   def select(id: Long): Future[Option[OAuthClient]] = {
